@@ -13,6 +13,7 @@ Wrapper for `katex.min.js` that provides a `<$latex>` widget. It is also availab
 "use strict";
 
 var katex = require("$:/plugins/tiddlywiki/katex/katex.min.js"),
+	macroparser = require("$:/plugins/tiddlywiki/katex/macro-parser.js"),
 	Widget = require("$:/core/modules/widgets/widget.js").widget;
 
 var KaTeXWidget = function(parseTreeNode,options) {
@@ -32,23 +33,40 @@ KaTeXWidget.prototype.render = function(parent,nextSibling) {
 	this.parentDomNode = parent;
 	this.computeAttributes();
 	this.execute();
-	// Get the source text
+	// Get the source text and figure out the displaystyle
 	var text = this.getAttribute("text",this.parseTreeNode.text || "");
-	// Render it into a span
-	var span = this.document.createElement("span");
+	var style = this.getAttribute("style",this.parseTreeNode.text || "");
+	// expand macros, after loading them, if they are present
+	var macrocont = $tw.wiki.getTiddlerText("LaTeX Macros");
+	if (typeof macrocont === "undefined") {
+		; // no macros
+	} else {
+		text = macroparser.expandLaTeXmacros(text,macrocont.toString().split('\n'));
+	}
+	// Render it into the appropriate element: span for inline, div with centering and \displaystyle for display
+	var elemnt;
+	if (style == "block") {
+		text = "\\displaystyle "+text;
+		elemnt = this.document.createElement("div");
+		elemnt.setAttribute("style","text-align:center");
+	} else {
+		elemnt = this.document.createElement("span");
+	}
+	//text = (style == "block") ? "\\displaystyle "+text:text;
+	//var elemnt = (style == "block")? this.document.createElement("div"):this.document.createElement("span");
 	try {
 		if($tw.browser) {
-			katex.render(text,span);
+			katex.render(text,elemnt);
 		} else {
-			span.innerHTML = katex.renderToString(text);
+			elemnt.innerHTML = katex.renderToString(text);
 		}
 	} catch(ex) {
-		span.className = "tc-error";
-		span.textContent = ex;
+		elemnt.className = "tc-error";
+		elemnt.textContent = ex;
 	}
 	// Insert it into the DOM
-	parent.insertBefore(span,nextSibling);
-	this.domNodes.push(span);
+	parent.insertBefore(elemnt,nextSibling);
+	this.domNodes.push(elemnt);
 };
 
 /*
