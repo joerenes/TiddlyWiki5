@@ -14,6 +14,7 @@ Wrapper for `katex.min.js` that provides a `<$latex>` widget. It is also availab
 
 var katex = require("$:/plugins/tiddlywiki/katex/katex.min.js"),
     chemParse = require("$:/plugins/tiddlywiki/katex/mhchem.min.js"),
+    macroparser = require("$:/plugins/tiddlywiki/katex/macro-parser.js"),
 	Widget = require("$:/core/modules/widgets/widget.js").widget;
 // Add \ce, \pu, and \tripledash to the KaTeX macros.
 katex.__defineMacro("\\ce", function(context) {
@@ -47,6 +48,12 @@ KaTeXWidget.prototype.render = function(parent,nextSibling) {
 	this.execute();
 	// Get the source text
 	var text = this.getAttribute("text",this.parseTreeNode.text || "");
+	var macrocont = $tw.wiki.getTiddlerText("LaTeX Macros");
+	if (typeof macrocont === "undefined") {
+		; // no macros
+	} else {
+		text = macroparser.expandLaTeXmacros(text,macrocont.toString().split('\n'));
+	}
 	var displayMode = this.getAttribute("displayMode",this.parseTreeNode.displayMode || "false") === "true";
 	// Render it into a span
 	var span = this.document.createElement("span"),
