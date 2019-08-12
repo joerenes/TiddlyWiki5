@@ -6,7 +6,13 @@ module-type: wikirule
 Wiki text inline rule for LaTeX. For example:
 
 ```
-	$$latex-goes-here$$
+	$$latex-goes-here$$		inline latex
+
+	\[more-latex\]			display latex
+
+	$$
+	latex-goes-here			also display 
+	$$
 ```
 
 This wikiparser can be modified using the rules eg:
@@ -29,10 +35,22 @@ exports.types = {inline: true};
 exports.init = function(parser) {
 	this.parser = parser;
 	// Regexp to match
-	this.matchRegExp = /\$\$(?!\$)/mg;
+	this.matchRegExp = /\\\[|\$\$(?!\$)/mg;
 };
 
 exports.parse = function() {
+	// figure out which delimiter we're dealing with. the result of the first regex from init is stored in this.match
+	var openmatch = this.match[0],
+		delimiterstyle,
+		reEnd;
+
+	if(openmatch == '\$\$') {
+		delimiterstyle = "dollar";
+		reEnd = /\$\$/mg;
+	} else {
+		delimiterstyle = "bracket";
+		reEnd = /\\\]/mg;
+	}
 	// Move past the match
 	this.parser.pos = this.matchRegExp.lastIndex;
 	var reEnd = /\$\$/mg;
@@ -44,7 +62,12 @@ exports.parse = function() {
 	// Process the text
 	if(match) {
 		text = this.parser.source.substring(this.parser.pos,match.index);
-		displayMode = text.indexOf('\n') != -1;
+		if(delimiterstyle == 'dollar') {
+			displayMode = text.indexOf('\n') != -1;
+		}
+		else {
+			displayMode = "true"
+		}
 		this.parser.pos = match.index + match[0].length;
 	} else {
 		text = this.parser.source.substr(this.parser.pos);
