@@ -33,6 +33,15 @@
 				"title": "$:/plugins/tiddlywiki/katex/mhchem.min.js",
 				"module-type": "library"
 			}
-		}
+		},{
+			"file": "macro-parser.js",
+			"fields": {
+				"type": "application/javascript",
+				"title": "$:/plugins/tiddlywiki/katex/macro-parser.js",
+				"module-type": "library"
+			},
+			"prefix": "(function(document) {\n",
+			"suffix": "\n})($tw.node ? $tw.fakeDocument : window.document)\n"
+			}
 	]
 }
